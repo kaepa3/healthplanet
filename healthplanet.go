@@ -68,7 +68,7 @@ func (c *HealthPlanetClient) Get(st Status, opt *HealthPlanetOption) (*http.Resp
 	from := getFromTo(opt.From, true)
 	to := getFromTo(opt.To, false)
 
-	request := apiRoot + status + c.getReturnType() + "?access_token=" + c.token.AccessToken + date + tagStr + from + to
+	request := apiRoot + status + getFormatType(opt.Format) + "?access_token=" + c.token.AccessToken + date + tagStr + from + to
 	fmt.Println(request)
 	return c.client.Get(request)
 }
@@ -119,12 +119,15 @@ func getStatusStr(st Status) (string, error) {
 		return "innerscan", nil
 	} else if st == Sphygmomanometer {
 		return "sphygmomanometer", nil
-	} else if st == Pedometer{
+	} else if st == Pedometer {
 		return "pedometer", nil
 	}
 	return "", errors.New("invalid value")
 }
 
-func (c *HealthPlanetClient) getReturnType() string {
+func getFormatType(t FormatType) string {
+	if t == Xml {
+		return ".xml"
+	}
 	return ".json"
-	:Gj}
+}
