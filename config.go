@@ -34,13 +34,11 @@ func NewConfig(c *HealthPlanetInit) HealthPlanetConfig {
 func (c *HealthPlanetConfig) AuthCodeURL(state string) string {
 	return c.config.AuthCodeURL(state)
 }
+func (c *HealthPlanetConfig) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
+	return c.config.Exchange(ctx, code)
+}
 
-func (c *HealthPlanetConfig) GetClient(ctx context.Context, code string) (*HealthPlanetClient, error) {
-	token, err := c.config.Exchange(ctx, code)
-	if err != nil {
-		return nil, err
-	}
-
-	client := c.config.Client(context.Background(), token)
+func (c *HealthPlanetConfig) GetClient(ctx context.Context, token *oauth2.Token) (*HealthPlanetClient, error) {
+	client := c.config.Client(ctx, token)
 	return &HealthPlanetClient{client: client, token: token}, nil
 }

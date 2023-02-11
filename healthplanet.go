@@ -48,6 +48,10 @@ type TagType int
 const (
 	Weight = iota
 	Fat
+	PressureHigh //622E : 最高血圧 (mmHg)
+	PressureLow  ///622F : 最低血圧 (mmHg)
+	Pulse        //6230 : 脈拍 (bpm)
+	Steps        // 6331 : 歩数 (歩)
 )
 
 type HealthPlanetOption struct {
@@ -101,6 +105,14 @@ func tagToStr(tag TagType) string {
 		tagStr = "6021"
 	case Fat:
 		tagStr = "6022"
+	case PressureHigh:
+		tagStr = "602E"
+	case PressureLow:
+		tagStr = "602F"
+	case Pulse:
+		tagStr = "6230"
+	case Steps:
+		tagStr = "6331"
 	}
 	return tagStr
 }
