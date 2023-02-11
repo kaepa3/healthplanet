@@ -1,62 +1,15 @@
-package main
+package healthplanet
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
+	"strings"
+	"time"
 
-	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 )
-
-func loadEnv() (string, string) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	return os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET")
-}
-
-type HealthPlanetInit struct {
-	ClientID     string
-	ClientSecret string
-	Scopes       []string
-	RedirectURL  string
-}
-
-type HealthPlanetConfig struct {
-	config oauth2.Config
-}
-
-func NewConfig(c *HealthPlanetInit) HealthPlanetConfig {
-	return HealthPlanetConfig{
-		config: oauth2.Config{
-			ClientID:     c.ClientID,
-			ClientSecret: c.ClientSecret,
-			RedirectURL:  c.RedirectURL,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://www.healthplanet.jp/oauth/auth",
-				TokenURL: "https://www.healthplanet.jp/oauth/token",
-			},
-			Scopes: c.Scopes,
-		},
-	}
-}
-func (c *HealthPlanetConfig) AuthCodeURL(state string) string {
-	return c.config.AuthCodeURL(state)
-}
-func (c *HealthPlanetConfig) GetClient(ctx context.Context, code string) (*HealthPlanetClient, error) {
-	token, err := c.config.Exchange(ctx, code)
-	if err != nil {
-		return nil, err
-	}
-
-	client := c.config.Client(context.Background(), token)
-	return &HealthPlanetClient{client: client, token: token}, nil
-}
 
 type HealthPlanetClient struct {
 	client *http.Client
@@ -64,52 +17,114 @@ type HealthPlanetClient struct {
 	token  *oauth2.Token
 }
 
+type Status int
+
 const (
-	apiRoot = "https://www.healthplanet.jp/status/innerscan"
+	Innerscan = iota
+	Sphygmomanometer
+	Pedometer
 )
 
-func (c *HealthPlanetClient) Get() (*http.Response, error) {
-	request := apiRoot + c.getReturnType() + "?access_token=" + c.token.AccessToken
+const (
+	apiRoot = "https://www.healthplanet.jp/status/"
+)
+
+type DateType int
+
+const (
+	Registration = iota
+	Measuring
+)
+
+type FormatType int
+
+const (
+	Xml = iota
+	Json
+)
+
+type TagType int
+
+const (
+	Weight = iota
+	Fat
+)
+
+type HealthPlanetOption struct {
+	Date   DateType
+	Format FormatType
+	From   time.Time
+	To     time.Time
+	Tags   []TagType
+}
+
+func (c *HealthPlanetClient) Get(st Status, opt *HealthPlanetOption) (*http.Response, error) {
+	status, err := getStatusStr(st)
+	if err != nil {
+		return nil, err
+	}
+	date := getDateType(opt.Date)
+	tagStr := getTag(opt.Tags)
+	from := getFromTo(opt.From, true)
+	to := getFromTo(opt.To, false)
+
+	request := apiRoot + status + c.getReturnType() + "?access_token=" + c.token.AccessToken + date + tagStr + from + to
 	fmt.Println(request)
 	return c.client.Get(request)
+}
+func getFromTo(t time.Time, isFrom bool) string {
+	if time.Now().IsZero() {
+		return ""
+	}
+	opt := "&to="
+	if isFrom {
+		opt = "&from="
+	}
+	return opt + t.Format("20060102150405")
+}
+
+func getTag(tags []TagType) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	tagList := make([]string, len(tags))
+	for i, v := range tags {
+		tagList[i] = tagToStr(v)
+	}
+	return "&tag=" + strings.Join(tagList, ",")
+}
+
+func tagToStr(tag TagType) string {
+	tagStr := ""
+	switch tag {
+	case Weight:
+		tagStr = "6021"
+	case Fat:
+		tagStr = "6022"
+	}
+	return tagStr
+}
+
+func getDateType(d DateType) string {
+	date := "0"
+
+	if d == Measuring {
+		date = "1"
+	}
+	return "&date=" + date
+}
+
+func getStatusStr(st Status) (string, error) {
+	if st == Innerscan {
+		return "innerscan", nil
+	} else if st == Sphygmomanometer {
+		return "sphygmomanometer", nil
+	} else if st == Pedometer{
+		return "pedometer", nil
+	}
+	return "", errors.New("invalid value")
 }
 
 func (c *HealthPlanetClient) getReturnType() string {
 	return ".json"
-}
-
-func main() {
-
-	ctx := context.Background()
-	clientID, clientSecret := loadEnv()
-
-	conf := NewConfig(&HealthPlanetInit{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		RedirectURL:  "http://localhost",
-		Scopes: []string{
-			"innerscan",
-		},
-	})
-
-	url := conf.AuthCodeURL("state")
-	fmt.Println(url)
-
-	scanner := bufio.NewScanner(os.Stdin) // 標準入力を受け付けるスキャナ
-	scanner.Scan()                        // １行分の入力を取得する
-	authCode := scanner.Text()
-
-	client, err := conf.GetClient(ctx, authCode)
-	if err != nil {
-		return
-	}
-
-	resp, err := client.Get()
-	if err != nil {
-		fmt.Println("-----------")
-		fmt.Println(err)
-		fmt.Println(resp)
-	} else {
-		fmt.Println(resp)
-	}
-}
+	:Gj}
