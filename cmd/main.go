@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kaepa3/healthplanet"
@@ -111,13 +112,27 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
-	opt := healthplanet.HealthPlanetOption{}
+	from, _ := time.Parse("01-02-15-04-05-2006", "01-01-00-00-00-2022")
+	opt := healthplanet.HealthPlanetOption{
+		Format: healthplanet.Json,
+		From:   from,
+	}
 	resp, err := client.Get(healthplanet.Innerscan, &opt)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(resp)
-	} else {
-		fmt.Println(resp)
+		return
 	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		fmt.Println("Error: status code", resp.StatusCode)
+		return
+	}
+
+	data, err := healthplanet.ConvertToJson(resp.Body)
+	if err == nil {
+		fmt.Print(err)
+		return
+	}
+	fmt.Println(data)
 }

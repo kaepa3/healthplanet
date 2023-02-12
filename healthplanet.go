@@ -76,8 +76,9 @@ func (c *HealthPlanetClient) Get(st Status, opt *HealthPlanetOption) (*http.Resp
 	fmt.Println(request)
 	return c.client.Get(request)
 }
+
 func getFromTo(t time.Time, isFrom bool) string {
-	if time.Now().IsZero() {
+	if t.IsZero() {
 		return ""
 	}
 	opt := "&to="
