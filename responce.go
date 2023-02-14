@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-type Responce struct {
+type JsonResponce struct {
 	BirthDate string `json:"birth_date"`
 	Height    string `json:"height"`
 	Sex       string `json:"male"`
@@ -19,7 +19,7 @@ type Data struct {
 	Tag     string `json:"tag"`
 }
 
-func ConvertToJson(b io.ReadCloser) (*Responce, error) {
+func ConvertToJson(b io.ReadCloser) (*JsonResponce, error) {
 	body, err := io.ReadAll(b)
 	if err != nil {
 		return nil, err
