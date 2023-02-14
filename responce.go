@@ -9,7 +9,7 @@ type JsonResponce struct {
 	BirthDate string `json:"birth_date"`
 	Height    string `json:"height"`
 	Sex       string `json:"male"`
-	Data      Data   `json:"data"`
+	Data      []Data `json:"data"`
 }
 
 type Data struct {
@@ -25,7 +25,7 @@ func ConvertToJson(b io.ReadCloser) (*JsonResponce, error) {
 		return nil, err
 	}
 
-	resp := Responce{}
+	resp := JsonResponce{}
 	if err := json.Unmarshal(body, &resp); err != nil {
 		return nil, err
 	}

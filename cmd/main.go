@@ -73,6 +73,7 @@ func getTokenFromWeb(conf healthplanet.HealthPlanetConfig) (*oauth2.Token, error
 
 func getToken(conf healthplanet.HealthPlanetConfig) (*oauth2.Token, error) {
 
+	fmt.Println("file")
 	if exists(tokenFileName) {
 		token, err := getTokenFromFile()
 		if err == nil {
@@ -80,6 +81,7 @@ func getToken(conf healthplanet.HealthPlanetConfig) (*oauth2.Token, error) {
 		}
 	}
 
+	fmt.Println("web")
 	return getTokenFromWeb(conf)
 }
 
@@ -130,7 +132,7 @@ func main() {
 	}
 
 	data, err := healthplanet.ConvertToJson(resp.Body)
-	if err == nil {
+	if err != nil {
 		fmt.Print(err)
 		return
 	}
