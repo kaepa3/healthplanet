@@ -13,10 +13,14 @@ type JsonResponce struct {
 }
 
 type Data struct {
-	Date    string `json:"date"`
+	// 測定日
+	Date string `json:"date"`
+	// 測定データ
 	KeyData string `json:"keydata"`
-	Model   string `json:"model"`
-	Tag     string `json:"tag"`
+	// 測定機器名
+	Model string `json:"model"`
+	// 測定部位
+	Tag string `json:"tag"`
 }
 
 func ConvertToJson(b io.ReadCloser) (*JsonResponce, error) {
